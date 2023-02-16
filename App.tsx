@@ -1,46 +1,49 @@
 import { StatusBar } from 'expo-status-bar';
-import { useState, useEffect } from 'react';
-import { StyleSheet, Text, TextInput, View, Keyboard, Animated} from 'react-native';
+import { useState, useEffect, useRef } from 'react';
+import { StyleSheet, Text, TextInput, View, Keyboard, Animated, useWindowDimensions} from 'react-native';
 
 export default function App() {
   const [loginInput, setLoginInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [loginInputStatus, setLoginInputStatus] = useState(true);
   const [passwordInputStatus, setPasswordInputStatus] = useState(false);
-  const [inputMarginBottom, setInputMarginBottom] = useState(new Animated.Value(0));
+  const inputMarginBottom = useRef(new Animated.Value(0));
+  const [valueToTranslate, setValueToTranslate] = useState(0)
 
   useEffect(() => {
     Keyboard.addListener('keyboardDidShow', () => {
-      //setInputMarginBottom(50);
+      setValueToTranslate(-50);
     });
 
     Keyboard.addListener('keyboardDidHide', () => {
-      //setInputMarginBottom(0);
+      setValueToTranslate(0);
     });
   }, []);
 
   useEffect(() => {
-    Animated.timing(inputMarginBottom, {
-      toValue: 1,
-      duration: 10000,
+    Animated.timing(inputMarginBottom.current, {
+      toValue: valueToTranslate,
+      duration: 200,
       useNativeDriver: true,
     }).start();
-  }, [inputMarginBottom]);
+  }, [inputMarginBottom, valueToTranslate]);
 
   return (
     <Animated.View style={styles.container}>
       {
         loginInputStatus &&
-        <TextInput
-          style={[styles.inputStyle, {marginBottom: inputMarginBottom}]}
-          autoFocus={true}
-          onChangeText={setLoginInput}
-          value={loginInput}
-          maxLength={40}
-          onSubmitEditing = {(e) => {
-            console.log('Testing submit');
-          }}
-        />
+        <Animated.View style={{ transform: [{ translateY: inputMarginBottom.current }] }}> 
+          <TextInput
+            style={styles.inputStyle}
+            autoFocus={true}
+            onChangeText={setLoginInput}
+            value={loginInput}
+            maxLength={40}
+            onSubmitEditing = {(e) => {
+              console.log('Testing submit');
+            }}
+          />
+         </Animated.View>
       }
 
       {
