@@ -1,81 +1,122 @@
 import { StatusBar } from 'expo-status-bar';
 import { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, TextInput, View, Keyboard, Animated, useWindowDimensions} from 'react-native';
+import { Text, TextInput, View, Keyboard, Animated, Image } from 'react-native';
+import styles from './styles/authStyle';
 
 export default function App() {
-  const [loginInput, setLoginInput] = useState('');
-  const [passwordInput, setPasswordInput] = useState('');
-  const [loginInputStatus, setLoginInputStatus] = useState(true);
-  const [passwordInputStatus, setPasswordInputStatus] = useState(false);
+  const [authStates, setAuthStates] = useState({
+    loginInput: '',
+    passwordInput: '',
+    loginInputStatus: true,
+    passwordInputStatus: false,
+    valueToTranslate: 0,
+    valueToScale: 1,
+  });
   const inputMarginBottom = useRef(new Animated.Value(0));
-  const [valueToTranslate, setValueToTranslate] = useState(0)
+  const logoScale = useRef(new Animated.Value(0.5));
 
   useEffect(() => {
     Keyboard.addListener('keyboardDidShow', () => {
-      setValueToTranslate(-50);
+      setAuthStates((prev) => ({
+        ...prev,
+        valueToTranslate: -25,
+        valueToScale: 1
+      }));
     });
 
     Keyboard.addListener('keyboardDidHide', () => {
-      setValueToTranslate(0);
+      setAuthStates((prev) => ({
+        ...prev,
+        valueToTranslate: 0,
+        valueToScale: 0.5
+      }));
     });
   }, []);
 
   useEffect(() => {
     Animated.timing(inputMarginBottom.current, {
-      toValue: valueToTranslate,
+      toValue: authStates.valueToTranslate,
       duration: 200,
       useNativeDriver: true,
     }).start();
-  }, [inputMarginBottom, valueToTranslate]);
+  }, [inputMarginBottom, authStates.valueToTranslate]);
+
+  useEffect(() => {
+    Animated.timing(logoScale.current, {
+      toValue: authStates.valueToScale,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  }, [logoScale, authStates.valueToScale]);
+
+  function handleLoginChangeInput(value: string): void {
+    setAuthStates((prev) => ({
+      ...prev,
+      loginInput: value
+    }));
+  }
+
+  function handlePasswordChangeInput(value: string): void {
+    setAuthStates((prev) => ({
+      ...prev,
+      passwordInput: value
+    }));
+  }
 
   return (
-    <Animated.View style={styles.container}>
+    <View style={styles.container}>
+      <Animated.View style={{position: 'absolute', width: '100%', height: '100%', alignItems: 'center',
+          justifyContent: 'center'}}>
+        <Animated.Image
+        source={require('./assets/auth/images/typeLogo.png')}
+        style={{
+          flex: 1,
+          width: '30%',
+          transform: [{ scale: logoScale.current }],
+          marginBottom: 200
+        }}
+        resizeMode="contain"
+        />
+      </Animated.View>
       {
-        loginInputStatus &&
+        authStates.loginInputStatus &&
         <Animated.View style={{ transform: [{ translateY: inputMarginBottom.current }] }}> 
           <TextInput
             style={styles.inputStyle}
             autoFocus={true}
-            onChangeText={setLoginInput}
-            value={loginInput}
+            onChangeText={handleLoginChangeInput}
+            value={authStates.loginInput}
             maxLength={40}
+            placeholder='Nome do usuário'
+            placeholderTextColor="rgba(255,255,255, 0.5)"
             onSubmitEditing = {(e) => {
-              console.log('Testing submit');
+              setAuthStates((prev) => ({
+                ...prev,
+                loginInputStatus: false,
+                passwordInputStatus: true
+              }));
             }}
           />
          </Animated.View>
       }
 
       {
-        passwordInputStatus &&
-        <TextInput
-          style={styles.inputStyle}
-          autoFocus={true}
-          onChangeText={setPasswordInput}
-          value={passwordInput}
-          maxLength={40}
-        />
+        authStates.passwordInputStatus &&
+        <Animated.View style={{ transform: [{ translateY: inputMarginBottom.current }] }}> 
+          <TextInput
+            style={styles.inputStyle}
+            autoFocus={true}
+            onChangeText={handlePasswordChangeInput}
+            value={authStates.passwordInput}
+            maxLength={40}
+            placeholder='Senha'
+            placeholderTextColor="rgba(255,255,255, 0.5)"
+            secureTextEntry={true}
+          />
+        </Animated.View>
       }
 
       <StatusBar style="auto" />
-    </Animated.View>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#212121',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  inputStyle: {
-      width: 300,
-      padding: 5,
-      borderBottomColor: '#DCDCDC',
-      borderBottomWidth: 2,
-      color: 'white',
-      transitionProperty: "all",
-      transitionDuration: "2000ms"
-  }
-});
