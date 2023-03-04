@@ -1,0 +1,10 @@
+image: cirrusci/flutter:3.7.5
+
+pipelines:
+  pull-requests:
+    '**':
+      - step:
+          name: Flutter lint and test
+          script:
+            - flutter analyze
+            - flutter test ./test
